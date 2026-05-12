@@ -13,4 +13,8 @@ public interface ItemStorage {
     List<Item> findAll();
 
     void delete(Long id);
+
+    List<Item> findAllContainsText(String searchText);
+
+    List<Item> findAllByOwnerId(Long userId);
 }

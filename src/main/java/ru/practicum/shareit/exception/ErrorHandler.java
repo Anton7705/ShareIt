@@ -23,4 +23,14 @@ public class ErrorHandler {
     public ErrorResponse handleNotFound(final AccessDeniedException e) {
         return new ErrorResponse("Нет прав на операцию", e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleInternalServerError(final Throwable e) {
+        log.error("Непредвиденная ошибка {}", e.getMessage(), e);
+        return new ErrorResponse(
+                "Внутренняя ошибка сервера",
+                "Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже."
+        );
+    }
 }

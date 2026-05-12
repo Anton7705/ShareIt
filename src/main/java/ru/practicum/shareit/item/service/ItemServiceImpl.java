@@ -1,11 +1,14 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.AccessDeniedException;
+import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.ItemStorage;
+import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
@@ -15,27 +18,31 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class ItemServiceImpl implements ItemService {
 
     private final UserService userService;
     private final ItemStorage itemStorage;
 
     @Override
-    public Item createItem(Item item, Long userId) {
-        User user = userService.findUser(userId);
+    public ItemDto createItem(ItemDto itemDto, Long userId) {
+        Item item = ItemMapper.toModel(itemDto);
+        item.setId(null);
+        User user = UserMapper.toModel(userService.findUser(userId));
         item.setOwner(user);
         itemStorage.save(item);
-        return item;
+        return ItemMapper.toDto(item);
     }
 
     @Override
-    public Item updateItem(Long itemId, ItemDto itemDto, Long userId) {
+    public ItemDto updateItem(Long itemId, ItemDto itemDto, Long userId) {
+        log.info("Обновление элемента с id : {}", itemId);
         userService.findUser(userId);
 
-        Item oldItem = itemStorage.get(itemId)
-                .orElseThrow(() -> new NoSuchElementException("Отсутствует элемент с id : " + itemId));
+        Item oldItem = getItem(itemId);
 
         if (!oldItem.getOwner().getId().equals(userId)) {
+            log.warn("Ошибка прав досутпа");
             throw new AccessDeniedException("Пользователь не имеет права на доступ к этому элементу");
         }
 
@@ -50,35 +57,39 @@ public class ItemServiceImpl implements ItemService {
         }
 
         itemStorage.save(oldItem);
-        return oldItem;
+        return ItemMapper.toDto(oldItem);
     }
 
     @Override
-    public Item getItem(Long itemId) {
-        return itemStorage.get(itemId)
-                .orElseThrow(() -> new NoSuchElementException("Отсутствует элемент с id : " + itemId));
+    public ItemDto findItem(Long itemId) {
+        log.info("Запрос элемента с id : {}", itemId);
+        return ItemMapper.toDto(getItem(itemId));
     }
 
     @Override
-    public List<Item> getItemsByOwner(Long userId) {
+    public List<ItemDto> findItemsByOwner(Long userId) {
+        log.info("Запрос всех элементов пользователя с id : {}", userId);
         userService.findUser(userId);
-
-        return itemStorage.findAll().stream()
-                .filter(item -> item.getOwner().getId().equals(userId))
+        return itemStorage.findAllByOwnerId(userId).stream()
+                .map(ItemMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<Item> searchItems(String text) {
+    public List<ItemDto> searchItems(String text) {
+        log.info("Поиск элемента по совпадению описания/имени");
         if (text == null || text.isBlank()) {
             return List.of();
         }
 
         String searchText = text.toLowerCase();
-        return itemStorage.findAll().stream()
-                .filter(item -> item.getAvailable() != null && item.getAvailable())
-                .filter(item -> (item.getName() != null && item.getName().toLowerCase().contains(searchText))
-                        || (item.getDescription() != null && item.getDescription().toLowerCase().contains(searchText)))
+        return itemStorage.findAllContainsText(searchText).stream()
+                .map(ItemMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    private Item getItem(Long itemId) {
+        return itemStorage.get(itemId)
+                .orElseThrow(() -> new NoSuchElementException("Отсутствует элемент с id : " + itemId));
     }
 }
