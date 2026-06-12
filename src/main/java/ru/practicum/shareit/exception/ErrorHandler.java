@@ -19,7 +19,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleNotFound(final AccessDeniedException e) {
         return new ErrorResponse("Нет прав на операцию", e.getMessage());
     }
