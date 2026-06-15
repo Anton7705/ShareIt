@@ -56,7 +56,6 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = BookingMapper.toModel(bookingDto);
         booking.setItem(item);
         booking.setBooker(booker);
-        booking.setStatus(BookingStatus.WAITING);
 
         Booking saved = bookingRepository.save(booking);
         log.info("Создано бронирование с id: {}", saved.getId());
