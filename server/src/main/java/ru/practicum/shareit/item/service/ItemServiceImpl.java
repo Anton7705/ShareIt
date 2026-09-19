@@ -106,10 +106,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> searchItems(String text) {
         log.info("Поиск элемента по совпадению описания/имени");
-        if (text == null || text.isBlank()) {
-            return List.of();
-        }
-
         String searchText = text.toLowerCase();
         return itemRepository.searchByText(searchText).stream()
                 .map(ItemMapper::toDto)

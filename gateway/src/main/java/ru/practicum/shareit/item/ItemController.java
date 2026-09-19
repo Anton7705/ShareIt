@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.client.BaseClient;
 import ru.practicum.shareit.validation.Create;
 import ru.practicum.shareit.validation.Update;
+
+import java.util.List;
 import java.util.Map;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.CommentDto;
@@ -48,6 +50,9 @@ public class ItemController {
     @GetMapping("/search")
     public ResponseEntity<Object> search(@RequestParam String text,
                                          @Positive @RequestHeader("X-Sharer-User-Id") Long userId) {
+        if (text == null || text.isBlank()) {
+            return ResponseEntity.ok(List.of());
+        }
         return client.send(HttpMethod.GET, "/items/search", userId, null, Map.of("text", text));
     }
 
