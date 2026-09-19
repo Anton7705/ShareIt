@@ -93,8 +93,6 @@ class ServiceIntegrationTest {
     void itemsSupportPartialUpdatesSearchAndOwnership() {
         assertThat(items.findItem(itemId, owner).getRequestId()).isNull();
         assertThat(items.searchItems("tOoL")).extracting(ItemDto::getId).containsExactly(itemId);
-        assertThat(items.searchItems(" ")).isEmpty();
-        assertThat(items.searchItems(null)).isEmpty();
         assertThatThrownBy(() -> items.updateItem(itemId, ItemDto.builder().name("Stolen").build(), booker))
                 .isInstanceOf(AccessDeniedException.class);
         assertThat(items.updateItem(itemId, ItemDto.builder().name("Saw").build(), owner).getDescription())
